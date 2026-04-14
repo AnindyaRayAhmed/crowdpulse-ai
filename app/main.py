@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from typing import Optional
 from dotenv import load_dotenv
 from app.ai_engine import chat_with_ai
 from app.crowd_data import get_crowd_data
@@ -22,6 +23,8 @@ templates = Jinja2Templates(directory=os.path.join(base_dir, "templates"))
 class ChatRequest(BaseModel):
     message: str
     stadium_id: str
+    user_lat: Optional[float] = None
+    user_lng: Optional[float] = None
 
 @app.get("/")
 async def root(request: Request):
@@ -43,5 +46,10 @@ async def get_crowd_data_endpoint(stadium_id: str, source: str = "simulated"):
 @app.post("/api/chat")
 async def chat_endpoint(chat_request: ChatRequest):
     """Handles the AI chat."""
-    response_data = chat_with_ai(chat_request.message, chat_request.stadium_id)
+    response_data = chat_with_ai(
+        chat_request.message, 
+        chat_request.stadium_id,
+        chat_request.user_lat,
+        chat_request.user_lng
+    )
     return JSONResponse(response_data)

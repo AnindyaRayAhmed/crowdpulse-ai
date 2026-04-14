@@ -89,12 +89,20 @@ def _get_fallback_simulated_data(stadium_id: str):
         {"id": "exit_1", "name": "East Exit", "lat": stadium["lat"], "lng": stadium["lng"] - 0.001, "density": random.uniform(0.2, 0.5), "wait_time": random.randint(1, 5)},
     ]
     
+    # Add washroom zones
+    zones.extend([
+        {"id": "washroom_1", "name": "Washroom (Near North Gate)", "lat": stadium["lat"] + 0.0015, "lng": stadium["lng"], "density": random.uniform(0.1, 0.4), "wait_time": random.randint(1, 5)},
+        {"id": "washroom_2", "name": "Washroom (Near South Gate)", "lat": stadium["lat"] - 0.0015, "lng": stadium["lng"], "density": random.uniform(0.5, 0.9), "wait_time": random.randint(5, 15)}
+    ])
+
     heatmap_points = generate_random_heatmap_points(stadium["lat"], stadium["lng"], stadium["radius"], count=100)
     
     return {
         "stadium_info": stadium,
         "zones": zones,
-        "heatmap": heatmap_points
+        "heatmap": heatmap_points,
+        "data_source_label": "Simulated Data",
+        "confidence_score": "Low"
     }
 
 def _generate_simulated_data(stadium_id: str):
@@ -187,15 +195,24 @@ def _generate_simulated_data(stadium_id: str):
             {"id": "exit_1", "name": "East Exit", "lat": place_lat, "lng": place_lng - 0.001, "density": max(base_density - random.uniform(0, 0.2), 0.1), "wait_time": int(base_density * 10)},
         ]
         
+        zones.extend([
+            {"id": "washroom_1", "name": "Washroom (Near North Gate)", "lat": place_lat + 0.0015, "lng": place_lng, "density": min(base_density + 0.1, 1.0), "wait_time": int(base_density * 15)},
+            {"id": "washroom_2", "name": "Washroom (Near South Gate)", "lat": place_lat - 0.0015, "lng": place_lng, "density": max(base_density - 0.1, 0.1), "wait_time": int(base_density * 25)}
+        ])
+        
         stadium_info = dict(stadium)
         stadium_info["lat"] = place_lat
         stadium_info["lng"] = place_lng
         stadium_info["place_id"] = place_id
         
+        confidence = "High" if ratio > 1.2 else "Medium"
+        
         return {
             "stadium_info": stadium_info,
             "zones": zones,
-            "heatmap": heatmap_points
+            "heatmap": heatmap_points,
+            "data_source_label": "Live Traffic Data",
+            "confidence_score": confidence
         }
         
     except Exception as e:

@@ -23,6 +23,8 @@ let currentStadiumId = "eden_gardens";
 let map;
 let heatmap;
 let crowdDataInterval;
+let currentUserLat = null;
+let currentUserLng = null;
 
 // DOM Elements
 const chatArea = document.getElementById('chat-area');
@@ -50,6 +52,8 @@ function detectNearestStadium() {
                 (position) => {
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
+                    currentUserLat = userLat;
+                    currentUserLng = userLng;
                     
                     let nearest = "eden_gardens";
                     let minDistance = Infinity;
@@ -101,7 +105,7 @@ async function sendMessage() {
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text, stadium_id: currentStadiumId })
+            body: JSON.stringify({ message: text, stadium_id: currentStadiumId, user_lat: currentUserLat, user_lng: currentUserLng })
         });
         const data = await response.json();
         
@@ -130,6 +134,18 @@ async function loadCrowdData() {
         const res = await fetch(`/api/stadium/${currentStadiumId}/crowd-data`);
         const result = await res.json();
         const data = result.data;
+        
+        const indicator = document.getElementById('data-source-indicator');
+        if (indicator && data.data_source_label) {
+            indicator.textContent = "Source: " + data.data_source_label;
+            if (data.data_source_label.includes("Live")) {
+                indicator.style.color = "#4ade80";
+                indicator.style.borderColor = "rgba(74, 222, 128, 0.3)";
+            } else {
+                indicator.style.color = "#888";
+                indicator.style.borderColor = "rgba(255,255,255,0.1)";
+            }
+        }
         
         if (map && window.google && google.maps.visualization) {
             // Update heatmap
