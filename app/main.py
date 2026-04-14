@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from app.ai_engine import chat_with_ai
-from app.crowd_data import get_venue_data
+from app.crowd_data import get_crowd_data
 
 # Load environment variables
 load_dotenv()
@@ -35,9 +35,9 @@ async def get_config():
     })
 
 @app.get("/api/stadium/{stadium_id}/crowd-data")
-async def get_crowd_data(stadium_id: str):
-    """Returns simulated crowd data for a given stadium."""
-    data = get_venue_data(stadium_id)
+async def get_crowd_data_endpoint(stadium_id: str, source: str = "simulated"):
+    """Returns crowd data for a given stadium based on the data source."""
+    data = get_crowd_data(stadium_id, source=source)
     return JSONResponse({"data": data})
 
 @app.post("/api/chat")

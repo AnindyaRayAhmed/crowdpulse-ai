@@ -1,5 +1,11 @@
 import random
 import math
+import os
+
+# Placeholder configuration for secure access (future integration)
+# E.g., read from environment variables:
+STADIUM_API_KEY = os.environ.get("STADIUM_API_KEY", "")
+IOT_AUTH_TOKEN = os.environ.get("IOT_AUTH_TOKEN", "")
 
 # Predefined dataset of major stadiums
 STADIUMS = {
@@ -43,10 +49,32 @@ def generate_random_heatmap_points(lat, lng, radius, count=50):
         })
     return points
 
-def get_venue_data(stadium_id: str):
+def fetch_stadium_api_data(stadium_id: str):
     """
-    Returns the metadata, zones, and heatmap points for a stadium.
+    Placeholder: Fetch live data from official Stadium APIs using STADIUM_API_KEY.
+    Returns mock data for now.
     """
+    # TODO: Implement real API request here
+    # Example: response = requests.get(f"https://api.stadium.example/status?id={stadium_id}", headers={"Authorization": f"Bearer {STADIUM_API_KEY}"})
+    return _generate_simulated_data(stadium_id)
+
+def fetch_iot_sensor_data(stadium_id: str):
+    """
+    Placeholder: Fetch live data from IoT sensors deployed at turnstiles and gates using IOT_AUTH_TOKEN.
+    Returns mock data for now.
+    """
+    # TODO: Implement real MQTT/HTTP call to IoT data broker
+    return _generate_simulated_data(stadium_id)
+
+def fetch_camera_data(stadium_id: str):
+    """
+    Placeholder: Fetch crowd density estimates from camera-based computer vision analytics.
+    Returns mock data for now.
+    """
+    # TODO: Implement connection to video analytics engine
+    return _generate_simulated_data(stadium_id)
+
+def _generate_simulated_data(stadium_id: str):
     if stadium_id not in STADIUMS:
         stadium_id = "eden_gardens" # Fallback
         
@@ -67,3 +95,17 @@ def get_venue_data(stadium_id: str):
         "zones": zones,
         "heatmap": heatmap_points
     }
+
+def get_crowd_data(stadium_id: str, source: str = "simulated"):
+    """
+    Unified function for returning stadium crowd data based on the selected source.
+    """
+    if source == "stadium_api":
+        return fetch_stadium_api_data(stadium_id)
+    elif source == "iot_sensors":
+        return fetch_iot_sensor_data(stadium_id)
+    elif source == "camera_vision":
+        return fetch_camera_data(stadium_id)
+    else:
+        # Default behavior: simulated demo mode
+        return _generate_simulated_data(stadium_id)

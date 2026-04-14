@@ -45,3 +45,15 @@ To deploy to Google Cloud Run, follow these steps:
      --set-env-vars GOOGLE_MAPS_API_KEY=your_maps_key,GEMINI_API_KEY=your_gemini_key
    ```
    Make sure to pass and update your environment variables via `--set-env-vars` or configuring them in the Cloud Console.
+
+## Future Integrations
+
+CrowdPulse AI is architected to scale from simulated data (the current default mode for demonstrations) to live, real-world data sources. 
+
+The backend supports a plug-and-play architecture where the crowd data source can be seamlessly swapped. Currently, the system has structured placeholders and configuration readiness to connect to:
+
+- **Stadium APIs:** Connecting to official venue management systems for ticket scans, gate throughput, and internal mapping.
+- **IoT Sensors:** Integrating with turnstiles or localized hardware sensors tracking density in food courts and merchandise stands.
+- **Camera-based Crowd Analytics:** Ingesting computer vision estimates of crowd sizes from existing CCTV cameras.
+
+To keep demonstrations functional without external dependencies, the system currently runs effectively using **simulated data mode**.

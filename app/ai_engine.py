@@ -3,7 +3,7 @@ import json
 from google import genai
 from google.genai import types
 from google.genai.errors import APIError
-from app.crowd_data import get_venue_data
+from app.crowd_data import get_crowd_data
 
 SYSTEM_PROMPT = """You are CrowdPulse AI, an intelligent assistant helping users navigate crowded stadiums.
 
@@ -23,6 +23,8 @@ Always prioritize:
 - Convenience
 
 Keep responses short, clear, and practical.
+You are aware that your data comes from various sources (e.g., Stadium APIs, IoT, Camera Vision, or Simulated).
+Currently, if using simulated data, mention things like "Based on current crowd estimates..." to explicitly set expectations.
 
 Current Venue Context Data:
 {context}
@@ -36,7 +38,7 @@ Provide your response in JSON format exactly like this:
 
 def chat_with_ai(user_message: str, stadium_id: str):
     api_key = os.environ.get("GEMINI_API_KEY")
-    venue_data = get_venue_data(stadium_id)
+    venue_data = get_crowd_data(stadium_id, source="simulated")
     
     # Format the context for the AI
     zones_info = []
