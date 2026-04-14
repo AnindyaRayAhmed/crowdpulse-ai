@@ -1,6 +1,7 @@
 import random
 import math
 import os
+import requests
 
 # Placeholder configuration for secure access (future integration)
 # E.g., read from environment variables:
@@ -74,7 +75,7 @@ def fetch_camera_data(stadium_id: str):
     # TODO: Implement connection to video analytics engine
     return _generate_simulated_data(stadium_id)
 
-def _generate_simulated_data(stadium_id: str):
+def _get_fallback_simulated_data(stadium_id: str):
     if stadium_id not in STADIUMS:
         stadium_id = "eden_gardens" # Fallback
         
@@ -95,6 +96,111 @@ def _generate_simulated_data(stadium_id: str):
         "zones": zones,
         "heatmap": heatmap_points
     }
+
+def _generate_simulated_data(stadium_id: str):
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+    if not api_key:
+        return _get_fallback_simulated_data(stadium_id)
+        
+    if stadium_id not in STADIUMS:
+        stadium_id = "eden_gardens"
+    stadium = STADIUMS[stadium_id]
+    
+    try:
+        # 1. Places API: Get place_id and exact location
+        query = f"{stadium['name']} stadium"
+        places_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={query}&key={api_key}"
+        places_res = requests.get(places_url, timeout=5).json()
+        
+        if places_res.get("status") != "OK" or not places_res.get("results"):
+            return _get_fallback_simulated_data(stadium_id)
+            
+        place_info = places_res["results"][0]
+        place_id = place_info["place_id"]
+        place_lat = place_info["geometry"]["location"]["lat"]
+        place_lng = place_info["geometry"]["location"]["lng"]
+        
+        # 2. Distance Matrix API: Simulate origins & travel time vs baseline
+        offset = stadium["radius"] * 5
+        origins = [
+            f"{place_lat + offset},{place_lng}",
+            f"{place_lat - offset},{place_lng}",
+            f"{place_lat},{place_lng + offset}",
+            f"{place_lat},{place_lng - offset}"
+        ]
+        origins_str = "|".join(origins)
+        dest_str = f"place_id:{place_id}"
+        
+        dm_url = f"https://maps.googleapis.com/maps/api/distancematrix/json?origins={origins_str}&destinations={dest_str}&departure_time=now&key={api_key}"
+        dm_res = requests.get(dm_url, timeout=5).json()
+        
+        if dm_res.get("status") != "OK":
+            return _get_fallback_simulated_data(stadium_id)
+            
+        total_duration = 0
+        total_duration_in_traffic = 0
+        valid_rows = 0
+        
+        for row in dm_res.get("rows", []):
+            for element in row.get("elements", []):
+                if element.get("status") == "OK":
+                    duration = element.get("duration", {}).get("value", 0)
+                    duration_in_traffic = element.get("duration_in_traffic", {}).get("value", duration)
+                    if duration > 0:
+                        total_duration += duration
+                        total_duration_in_traffic += duration_in_traffic
+                        valid_rows += 1
+                        
+        if valid_rows == 0:
+            return _get_fallback_simulated_data(stadium_id)
+            
+        # 3. Derive ratio and density score
+        ratio = total_duration_in_traffic / total_duration if total_duration > 0 else 1.0
+        
+        if ratio > 1.5:
+            base_density = 0.8
+            count = 150
+        elif ratio >= 1.2:
+            base_density = 0.5
+            count = 80
+        else:
+            base_density = 0.2
+            count = 30
+            
+        # 4. Generate heatmap points using density
+        heatmap_points = []
+        for _ in range(count):
+            angle = random.uniform(0, 2 * math.pi)
+            r = stadium["radius"] * math.sqrt(random.uniform(0, 1))
+            point_lat = place_lat + r * math.cos(angle)
+            point_lng = place_lng + r * math.sin(angle)
+            weight = base_density + random.uniform(0, 0.2)
+            if weight > 1.0:
+                weight = 1.0
+            heatmap_points.append({"lat": point_lat, "lng": point_lng, "weight": weight})
+            
+        # 5. Generate zones matching density
+        zones = [
+            {"id": "gate_1", "name": "North Gate", "lat": place_lat + 0.001, "lng": place_lng, "density": min(base_density + random.uniform(0, 0.2), 1.0), "wait_time": int(base_density * 30)},
+            {"id": "gate_2", "name": "South Gate", "lat": place_lat - 0.001, "lng": place_lng, "density": max(base_density - random.uniform(0, 0.1), 0.1), "wait_time": int(base_density * 20)},
+            {"id": "food_1", "name": "Food Court A", "lat": place_lat, "lng": place_lng + 0.001, "density": min(base_density + random.uniform(0, 0.2), 1.0), "wait_time": int(base_density * 25)},
+            {"id": "exit_1", "name": "East Exit", "lat": place_lat, "lng": place_lng - 0.001, "density": max(base_density - random.uniform(0, 0.2), 0.1), "wait_time": int(base_density * 10)},
+        ]
+        
+        stadium_info = dict(stadium)
+        stadium_info["lat"] = place_lat
+        stadium_info["lng"] = place_lng
+        stadium_info["place_id"] = place_id
+        
+        return {
+            "stadium_info": stadium_info,
+            "zones": zones,
+            "heatmap": heatmap_points
+        }
+        
+    except Exception as e:
+        print(f"Error fetching real world traffic data: {e}")
+        return _get_fallback_simulated_data(stadium_id)
 
 def get_crowd_data(stadium_id: str, source: str = "simulated"):
     """
