@@ -46,13 +46,6 @@ def chat_with_ai(user_message: str, stadium_id: str):
         zones_info.append(f"Zone: {z['name']}, Density: {z['density']:.2f} (0=empty, 1=packed), Wait Time: {z['wait_time']} mins, Lat: {z['lat']}, Lng: {z['lng']}")
     context_str = "\n".join(zones_info)
     
-    if not api_key:
-        # Fallback Mock AI Response
-        best_zone = min(venue_data['zones'], key=lambda x: x['wait_time'])
-        return {
-            "message": f"[Mock Mode] I see you're looking for help. The fastest route right now is towards {best_zone['name']} with only a {best_zone['wait_time']} min wait.",
-            "coordinates": {"lat": best_zone['lat'], "lng": best_zone['lng']}
-        }
 
     try:
         client = genai.Client(api_key=api_key)
