@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrowdPulse AI – Smart Stadium Navigator</title>
+    <!-- Google Fonts for Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Note: Google Maps API Script will be injected dynamically -->
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header / Stadium Info -->
+        <header class="app-header">
+            <div class="logo">
+                <span class="pulse"></span>
+                <h1>CrowdPulse AI</h1>
+            </div>
+            <div class="stadium-selectors">
+                <span id="stadium-name">Detecting Nearest Stadium...</span>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Left Panel: Live Venue Map -->
+            <section class="panel map-panel">
+                <div class="panel-header">
+                    <h2>Live Venue Map</h2>
+                    <p class="subtext">Real-time crowd flow & congestion</p>
+                </div>
+                <!-- Needs a wrapper for rounded container styling -->
+                <div class="map-wrapper">
+                    <div id="map">
+                        <div id="map-placeholder" class="placeholder">
+                            Loading Map Elements...
+                        </div>
+                    </div>
+                </div>
+                <div class="map-legend">
+                    <span class="legend-item"><span class="color-box dense"></span> High Density</span>
+                    <span class="legend-item"><span class="color-box medium"></span> Moderate</span>
+                    <span class="legend-item"><span class="color-box light"></span> Low</span>
+                </div>
+            </section>
+
+            <!-- Right Panel: Ask CrowdPulse AI -->
+            <section class="panel chat-panel">
+                <div class="panel-header">
+                    <h2>Ask CrowdPulse AI</h2>
+                    <p class="subtext">Smarter routes. Shorter waits.</p>
+                </div>
+                
+                <div class="chat-area" id="chat-area">
+                    <!-- Default Initial Message -->
+                    <div class="message ai-message">
+                        <div class="avatar">🤖</div>
+                        <div class="bubble">Hey 👋 I’m CrowdPulse AI — I help you move smarter through crowded venues. Where are you headed?</div>
+                    </div>
+                </div>
+                
+                <div class="input-area">
+                    <input type="text" id="chat-input" placeholder="Which gate is less crowded?" autocomplete="off" />
+                    <button id="guide-me-btn">Guide Me</button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="/static/script.js"></script>
+</body>
+</html>
