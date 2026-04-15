@@ -4,3 +4,7 @@ google-genai
 python-dotenv
 jinja2
 pytest
+pydantic-settings
+pytest-cov
+pytest-mock
+cachetools

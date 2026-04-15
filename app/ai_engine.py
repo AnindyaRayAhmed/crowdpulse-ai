@@ -1,10 +1,10 @@
-import os
 import json
 import math
 from google import genai
 from google.genai import types
 from google.genai.errors import APIError
 from app.crowd_data import get_crowd_data
+from app.config import settings
 
 SYSTEM_PROMPT = """You are CrowdPulse AI, an intelligent assistant helping users navigate crowded stadiums.
 
@@ -94,7 +94,7 @@ def _get_best_zone_fallback(zones, user_message, user_lat=None, user_lng=None):
     return best_zone
 
 def chat_with_ai(user_message: str, stadium_id: str, user_lat: float = None, user_lng: float = None):
-    api_key = os.environ.get("GEMINI_API_KEY")
+    api_key = settings.gemini_api_key
     venue_data = get_crowd_data(stadium_id, source="simulated")
     
     confidence = venue_data.get("confidence_score", "Low")
@@ -113,7 +113,7 @@ def chat_with_ai(user_message: str, stadium_id: str, user_lat: float = None, use
     
     try:
         if not api_key:
-            raise ValueError("No API Key")
+            raise ValueError("No GEMINI_API_KEY")
             
         client = genai.Client(api_key=api_key)
         prompt_with_context = SYSTEM_PROMPT.replace("{context}", context_str)
@@ -129,7 +129,7 @@ def chat_with_ai(user_message: str, stadium_id: str, user_lat: float = None, use
         data = json.loads(response.text)
         data['message'] = data.get('message', '') + conf_string
         return data
-    except Exception as e:
+    except (ValueError, APIError, Exception) as e:
         print(f"Error calling Gemini: {e}")
         # Smart Fallback
         best_zone_info = _get_best_zone_fallback(venue_data['zones'], user_message, user_lat, user_lng)

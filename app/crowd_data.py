@@ -1,12 +1,12 @@
 import random
 import math
-import os
 import requests
+from cachetools import cached, TTLCache
+from app.config import settings
 
 # Placeholder configuration for secure access (future integration)
-# E.g., read from environment variables:
-STADIUM_API_KEY = os.environ.get("STADIUM_API_KEY", "")
-IOT_AUTH_TOKEN = os.environ.get("IOT_AUTH_TOKEN", "")
+STADIUM_API_KEY = settings.stadium_api_key
+IOT_AUTH_TOKEN = settings.iot_auth_token
 
 # Predefined dataset of major stadiums
 STADIUMS = {
@@ -105,8 +105,9 @@ def _get_fallback_simulated_data(stadium_id: str):
         "confidence_score": "Low"
     }
 
+@cached(cache=TTLCache(maxsize=100, ttl=60))
 def _generate_simulated_data(stadium_id: str):
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+    api_key = settings.google_maps_api_key
     if not api_key:
         return _get_fallback_simulated_data(stadium_id)
         
@@ -118,12 +119,14 @@ def _generate_simulated_data(stadium_id: str):
         # 1. Places API: Get place_id and exact location
         query = f"{stadium['name']} stadium"
         places_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={query}&key={api_key}"
-        places_res = requests.get(places_url, timeout=5).json()
+        places_res = requests.get(places_url, timeout=5)
+        places_res.raise_for_status()
+        places_res_json = places_res.json()
         
-        if places_res.get("status") != "OK" or not places_res.get("results"):
+        if places_res_json.get("status") != "OK" or not places_res_json.get("results"):
             return _get_fallback_simulated_data(stadium_id)
             
-        place_info = places_res["results"][0]
+        place_info = places_res_json["results"][0]
         place_id = place_info["place_id"]
         place_lat = place_info["geometry"]["location"]["lat"]
         place_lng = place_info["geometry"]["location"]["lng"]
@@ -140,16 +143,18 @@ def _generate_simulated_data(stadium_id: str):
         dest_str = f"place_id:{place_id}"
         
         dm_url = f"https://maps.googleapis.com/maps/api/distancematrix/json?origins={origins_str}&destinations={dest_str}&departure_time=now&key={api_key}"
-        dm_res = requests.get(dm_url, timeout=5).json()
+        dm_res = requests.get(dm_url, timeout=5)
+        dm_res.raise_for_status()
+        dm_res_json = dm_res.json()
         
-        if dm_res.get("status") != "OK":
+        if dm_res_json.get("status") != "OK":
             return _get_fallback_simulated_data(stadium_id)
             
         total_duration = 0
         total_duration_in_traffic = 0
         valid_rows = 0
         
-        for row in dm_res.get("rows", []):
+        for row in dm_res_json.get("rows", []):
             for element in row.get("elements", []):
                 if element.get("status") == "OK":
                     duration = element.get("duration", {}).get("value", 0)
@@ -215,8 +220,11 @@ def _generate_simulated_data(stadium_id: str):
             "confidence_score": confidence
         }
         
+    except requests.exceptions.RequestException as e:
+        print(f"Network error fetching real world traffic data: {e}")
+        return _get_fallback_simulated_data(stadium_id)
     except Exception as e:
-        print(f"Error fetching real world traffic data: {e}")
+        print(f"Error processing real world traffic data: {e}")
         return _get_fallback_simulated_data(stadium_id)
 
 def get_crowd_data(stadium_id: str, source: str = "simulated"):

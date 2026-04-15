@@ -100,6 +100,12 @@ async function sendMessage() {
 
     appendMessage(text, true);
     chatInput.value = '';
+    
+    // Loading state for accessibility and usability
+    chatInput.disabled = true;
+    guideMeBtn.disabled = true;
+    const originalBtnText = guideMeBtn.textContent;
+    guideMeBtn.textContent = "Thinking...";
 
     try {
         const response = await fetch('/api/chat', {
@@ -126,6 +132,12 @@ async function sendMessage() {
     } catch (err) {
         console.error("Chat error:", err);
         appendMessage("Sorry, I'm having trouble connecting to the backend.", false);
+    } finally {
+        // Reset loading state
+        chatInput.disabled = false;
+        guideMeBtn.disabled = false;
+        guideMeBtn.textContent = originalBtnText;
+        chatInput.focus();
     }
 }
 
@@ -239,14 +251,15 @@ async function bootApp() {
     const stadium = STADIUMS[currentStadiumId];
     stadiumNameLabel.textContent = `Active Venue: ${stadium.name}`;
 
-    // 2. Load API keys configuration
+    // 2. Load feature flags configuration
     const configRes = await fetch('/api/config');
     const config = await configRes.json();
     
-    // 3. Load Map Script
-    if (config.google_maps_api_key) {
+    // 3. Load Map Script (API key injected server-side into template)
+    const mapsApiKey = window.__MAPS_API_KEY__;
+    if (mapsApiKey) {
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${config.google_maps_api_key}&libraries=visualization&callback=initMap`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsApiKey}&libraries=visualization&callback=initMap`;
         script.async = true;
         document.head.appendChild(script);
     } else {

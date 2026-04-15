@@ -17,10 +17,10 @@
                 <span class="pulse"></span>
                 <h1>CrowdPulse AI</h1>
             </div>
-            <div class="stadium-selectors" style="display: flex; align-items: center;">
+            <div class="stadium-selectors" style="display: flex; align-items: center;" aria-live="polite">
                 <span id="stadium-name">Detecting Nearest Stadium...</span>
 
-                <span id="data-source-indicator" style="margin-left: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); color: #888; border: 1px solid rgba(255,255,255,0.1); border-radius: 5px; font-size: 0.8rem;">
+                <span id="data-source-indicator" style="margin-left: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); color: #888; border: 1px solid rgba(255,255,255,0.1); border-radius: 5px; font-size: 0.8rem;" aria-label="Data Source Indicator">
                     Source: Loading...
                 </span>
             </div>
@@ -55,22 +55,26 @@
                     <p class="subtext">Smarter routes. Shorter waits.</p>
                 </div>
                 
-                <div class="chat-area" id="chat-area">
+                <div class="chat-area" id="chat-area" role="log" aria-live="polite">
                     <!-- Default Initial Message -->
                     <div class="message ai-message">
-                        <div class="avatar">🤖</div>
+                        <div class="avatar" aria-hidden="true">🤖</div>
                         <div class="bubble">Hey 👋 I’m CrowdPulse AI — I help you move smarter through crowded venues. Where are you headed?</div>
                     </div>
                 </div>
                 
                 <div class="input-area">
-                    <input type="text" id="chat-input" placeholder="Which gate is less crowded?" autocomplete="off" />
-                    <button id="guide-me-btn">Guide Me</button>
+                    <input type="text" id="chat-input" placeholder="Which gate is less crowded?" aria-label="Type your message to the AI assistant" autocomplete="off" />
+                    <button id="guide-me-btn" aria-label="Send message to AI assistant">Guide Me</button>
                 </div>
             </section>
         </div>
     </div>
 
+    <!-- Server-injected configuration (no secrets exposed via API) -->
+    <script>
+        window.__MAPS_API_KEY__ = "{{ google_maps_api_key | default('', true) }}";
+    </script>
     <!-- Application Script -->
     <script src="/static/script.js"></script>
 </body>
