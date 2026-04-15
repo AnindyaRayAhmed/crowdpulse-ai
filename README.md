@@ -155,11 +155,15 @@ gcloud run deploy crowdpulse-ai \
 
 This project includes basic API tests using pytest.
 
+
 ### Run tests:
 
 ```bash
 python -m pytest
+```
 
+
+---
 
 ## 📡 Data Sources (Current vs Future)
 
